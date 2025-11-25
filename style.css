@@ -1,0 +1,221 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+    overflow: hidden;
+    background: #dfe6e9;
+    font-family: "Poppins", sans-serif;
+}
+
+/* MAIN LAYOUT */
+.app {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    background: #dfe6e9;
+}
+
+/* HEADER */
+.chat-header {
+    height: 70px;
+    background: linear-gradient(90deg, #0d7666, #128C7E);
+    color: white;
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    border-radius: 0 0 15px 15px;
+    gap: 12px;
+    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.15);
+    z-index: 10;
+}
+
+.chat-header img {
+    width: 47px;
+    height: 47px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+}
+
+.chat-header h3 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 600;
+}
+
+/* CHAT BACKGROUND */
+/* CHAT BACKGROUND WITH MEDICAL DOODLES */
+#chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px;
+
+    /* Soft overlay + scrolling background */
+    background:
+        linear-gradient(to bottom, rgba(240, 245, 247, 0.90), rgba(240, 245, 247, 0.95)),
+        url("./assets/08.jpg");
+
+    background-size: 320px;
+    background-repeat: repeat;
+    background-position: top left;
+
+    /* Make background scroll with content */
+    background-attachment: scroll;
+
+    -webkit-overflow-scrolling: touch;
+}
+
+
+
+/* MESSAGE BUBBLES */
+.message {
+    margin: 10px 0;
+    padding: 13px 16px;
+    max-width: 75%;
+    border-radius: 18px;
+    font-size: 15px;
+    line-height: 1.35;
+    animation: fadeIn .2s ease-out;
+    position: relative;
+}
+
+/* Fade animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* USER MESSAGE (Teal, Soft, Premium Look) */
+.user-message {
+    background: #128C7E;
+    color: white;
+    margin-left: auto;
+    border-radius: 20px 20px 6px 20px;
+    padding: 14px 18px;
+    max-width: 75%;
+    font-size: 15px;
+    line-height: 1.45;
+    /* border: 2px solid rgba(0, 80, 70, 0.4); */
+    box-shadow: 0 4px 12px rgba(0, 80, 70, 0.35);
+    backdrop-filter: blur(10px);
+}
+
+/* BOT MESSAGE (Light teal doodle style) */
+.bot-message {
+    background: rgba(255, 255, 255, 0.75);
+    color: #034c43;
+    margin-right: auto;
+    border-radius: 20px 20px 20px 6px;
+    padding: 14px 18px;
+    max-width: 75%;
+    font-size: 15px;
+    line-height: 1.45;
+    border: 2px solid rgba(18, 140, 126, 0.25);
+    box-shadow: 0 4px 10px rgba(18, 140, 126, 0.15);
+    backdrop-filter: blur(3px);
+}
+
+/* TYPING INDICATOR */
+.typing {
+    width: 55px;
+    display: flex;
+    gap: 4px;
+    padding: 8px 12px;
+    background: white;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    margin-right: auto;
+    margin-top: 8px;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
+}
+
+.typing span {
+    width: 7px;
+    height: 7px;
+    background: #8b8b8b;
+    border-radius: 50%;
+    animation: blink 1.4s infinite ease-in-out;
+}
+
+@keyframes blink {
+    0% {
+        opacity: .2;
+        transform: translateY(0);
+    }
+
+    50% {
+        opacity: 1;
+        transform: translateY(-2px);
+    }
+
+    100% {
+        opacity: .2;
+        transform: translateY(0);
+    }
+}
+
+/* INPUT BAR */
+.chat-input-container {
+    height: 75px;
+    padding: 12px 15px;
+    display: flex;
+    gap: 12px;
+    background: #ffffff;
+    border-top: 1px solid #ccc;
+    box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.08);
+}
+
+#user-input {
+    flex: 1;
+    padding: 14px 18px;
+    border-radius: 30px;
+    border: 1px solid #ccc;
+    font-size: 15px;
+    outline: none;
+    background: #f7fafa;
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.07);
+    transition: 0.2s;
+}
+
+#user-input:focus {
+    border-color: #128C7E;
+    box-shadow: 0 0 0 3px rgba(18, 140, 126, 0.25);
+}
+
+#send-button {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0d7666, #128C7E);
+    color: white;
+    font-size: 22px;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+    transition: 0.15s;
+}
+
+#send-button:active {
+    transform: scale(0.92);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.speaker-btn {
+    margin-top: 0px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+}

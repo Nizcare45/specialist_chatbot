@@ -34,7 +34,6 @@ function addMessage(text, sender) {
             <div class="bot-content">${text}</div>
             <button class="speaker-btn">🔊</button>
         `;
-
         const speakerBtn = msg.querySelector(".speaker-btn");
 
         speakerBtn.onclick = () => {
@@ -89,49 +88,28 @@ function hideTyping() {
     if (t) t.remove();
 }
 
-
-const API_KEY = "AIzaSyDOOfWMvv_sj11LI467xhPIxBUM-vnNusM";
+// ----- OpenAI Configuration -----
+const OPENAI_API_KEY = "YOUR_OPENAI_API_KEY"; // Replace with your key
 let conversationHistory = [];
-let answersCollected = 0;
 
-// GEMINI CALL
-async function callGemini(userMsg) {
+// ----- Chatbot Call -----
+async function callOpenAI(userMsg) {
+    // Add user message to conversation
+    conversationHistory.push({ role: "user", content: userMsg });
 
-    conversationHistory.push({
-        role: "user",
-        text: userMsg
-    });
-
-const instruction = `
-<instruction>
+    const systemPrompt = `
 You are a MENTAL HEALTH & PSYCHOLOGY intake assistant.
 
-RULES YOU MUST FOLLOW:
-
-1. You must ONLY respond to mental health or psychology-related information.
-2. If the user says anything unrelated, reply exactly:
-   "I can answer mental health-related questions only. Please follow the intake questions."
-3. You MUST collect exactly 5 mental health intake answers, in this order:
-
-    What symptoms are you experiencing?  
-    How long have these symptoms been present?  
-    How is this affecting your daily life (work, school, relationships)?  
-    Are you currently receiving therapy or taking any mental health medications?
-
-4. If the user mentions:
-   • suicidal thoughts
-   • self-harm
-   • harming others
-
-   You MUST immediately respond with:
-   "If you are in immediate danger or thinking about harming yourself or others, please contact emergency services or a mental health crisis hotline right now."
-
-5. ALWAYS:
-   • Ask the next question ONLY if previous answer is relevant  
-   • If irrelevant → repeat SAME question  
-
-6. AFTER all 5 answers, YOU MUST FORMAT THE RESPONSE EXACTLY LIKE THIS:
-
+RULES:
+1. Only respond to mental health/psychology info.
+2. Collect exactly 5 intake answers in this order:
+   - Symptoms
+   - Duration
+   - Impact on daily life
+   - Previous similar experience
+   - Current therapy/medications
+3. If user mentions suicidal thoughts, self-harm, or harming others, instruct them to contact emergency services immediately.
+4. After 5 answers, return an HTML summary exactly formatted as:
 <div class="section" style="margin-left:20px;">
   <h3>Mental Health Summary</h3>
   <ul>
@@ -140,7 +118,6 @@ RULES YOU MUST FOLLOW:
     <li>[summary point 3]</li>
   </ul>
 </div>
-
 <div class="section" style="margin-left:20px;">
   <h3>Possible Psychological Considerations</h3>
   <ul>
@@ -149,7 +126,6 @@ RULES YOU MUST FOLLOW:
     <li>[consideration 3]</li>
   </ul>
 </div>
-
 <div class="section" style="margin-left:20px;">
   <h3>Support & Next Steps</h3>
   <ul>
@@ -158,77 +134,50 @@ RULES YOU MUST FOLLOW:
     <li>[support 3]</li>
   </ul>
 </div>
-
-FORMATTING RULES:
-- MUST return valid HTML.
-- Use <div>, <h3>, <ul>, <li> tags exactly as shown.
-- No markdown.
-- No paragraphs.
-- No extra commentary.
-- Do NOT ask more questions.
-
-7. ALWAYS prioritize patient safety and encourage professional support if symptoms are severe.
-8. If the user asks additional mental health questions, answer them briefly after the formatted response.
-</instruction>
+5. Must return valid HTML, no markdown, no extra commentary.
+6. Always prioritize safety and encourage professional support if symptoms are severe.
 `;
 
-    // Build full history in Gemini format
-    const contents = [
-        {
-            role: "user",
-            parts: [
-                {
-                    text: instruction + "\n\nUser conversation begins now:"
-                }
-            ]
-        },
-        ...conversationHistory.map(m => ({
-            role: m.role === "user" ? "user" : "model",
-            parts: [{ text: m.text }]
-        }))
+    // Build messages for OpenAI
+    const messages = [
+        { role: "system", content: systemPrompt },
+        ...conversationHistory
     ];
 
     try {
-        const res = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`,
-            {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    model: "gemini-2.5-flash",
-                    contents: contents
-                })
-            }
-        );
+        const res = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${OPENAI_API_KEY}`
+            },
+            body: JSON.stringify({
+                model: "gpt-3.5-turbo",
+                messages: messages,
+                temperature: 0.7
+            })
+        });
 
         const data = await res.json();
-        console.log("📌 RAW GEMINI RESPONSE:", data);
 
-        if (data.error) {
-            return `❌ Gemini API Error: ${data.error.message}`;
-        }
+        if (data.error) return `❌ OpenAI Error: ${data.error.message}`;
+        if (!data.choices || !data.choices[0].message)
+            return "⚠️ No response from OpenAI.";
 
-        if (!data.candidates || !data.candidates[0]) {
-            return "⚠️ No response from Gemini.";
-        }
+        const aiText = data.choices[0].message.content;
 
-        const aiText = data.candidates[0].content.parts[0].text;
-
-        // Store model response
-        conversationHistory.push({
-            role: "model",
-            text: aiText
-        });
+        // Add assistant reply to conversation
+        conversationHistory.push({ role: "assistant", content: aiText });
 
         return aiText;
 
     } catch (err) {
-        console.error("❌ FETCH ERROR:", err);
+        console.error("❌ OpenAI FETCH ERROR:", err);
         return "❌ Network or API error.";
     }
 }
 
-// SEND HANDLER 
+// ----- Send Handler -----
 send.onclick = async () => {
     const msg = input.value.trim();
     if (!msg) return;
@@ -237,7 +186,7 @@ send.onclick = async () => {
     input.value = "";
 
     showTyping();
-    const reply = await callGemini(msg);
+    const reply = await callOpenAI(msg);
     hideTyping();
 
     addMessage(reply, "bot");
@@ -247,15 +196,10 @@ input.addEventListener("keypress", e => {
     if (e.key === "Enter") send.click();
 });
 
-// GREETING 
+// ----- Greeting -----
 setTimeout(() => {
-    addMessage(
-        "Hello! I'm your Mental Health & Psychology AI Assistant. Let's begin.\nWhat symptoms are you experiencing?",
-        "bot"
-    );
+    const greeting = "Hello! I'm your Mental Health & Psychology AI Assistant. Let's begin.\nWhat symptoms are you experiencing?";
+    addMessage(greeting, "bot");
 
-    conversationHistory.push({
-        role: "model",
-        text: "What symptoms are you experiencing?"
-    });
+    conversationHistory.push({ role: "assistant", content: greeting });
 }, 500);
